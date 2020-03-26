@@ -1,0 +1,13 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "react-sharepoint-webpart-client-side-solution",
+    "id": "00ec4946-db63-4f0c-b034-bbac6a512a7a",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "isDomainIsolated": false
+  },
+  "paths": {
+    "zippedPackage": "solution/react-sharepoint-webpart.sppkg"
+  }
+}
