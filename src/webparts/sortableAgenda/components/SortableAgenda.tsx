@@ -163,7 +163,7 @@ export default class SortableAgenda extends React.Component <ISortableAgendaProp
     return (
       <div className={ styles.sortableAgenda }>
         <div>{this.props.listName}</div>
-        
+        <span>ss</span>
         <div><select id='calenarEvents'></select></div>
         <div className={ styles.container }>
           <div style={{display:"grid",gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr", padding:"10px"}}>
