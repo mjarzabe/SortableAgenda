@@ -11,6 +11,7 @@ import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
 import * as strings from 'SortableAgendaWebPartStrings';
 import SortableAgenda from './components/SortableAgenda';
 import { ISortableAgendaProps } from './components/ISortableAgendaProps';
+import { SPHttpClient, SPHttpClientResponse, SPHttpClientConfiguration } from '@microsoft/sp-http'; 
 
 export interface ISortableAgendaWebPartProps {
   description: string;
@@ -20,6 +21,24 @@ export interface ISortableAgendaWebPartProps {
 export default class SortableAgendaWebPart extends BaseClientSideWebPart <ISortableAgendaWebPartProps> {
   private lists: IPropertyPaneDropdownOption[];
   private listsDropdownDisabled: boolean = true;
+  protected onPropertyPaneConfigurationStart(): void {
+    this.listsDropdownDisabled = !this.lists;
+
+    if (this.lists) {
+      this.render();
+      return;
+    }
+
+    //this.context.statusRenderer.displayLoadingIndicator(this.domElement, 'lists');
+    this.loadLists()
+      .then((listOptions: IPropertyPaneDropdownOption[]): void => {
+        this.lists = listOptions;
+        this.listsDropdownDisabled = false;
+        this.context.propertyPane.refresh();
+        //this.context.statusRenderer.clearLoadingIndicator(this.domElement);
+        this.render();
+      });
+  }
 
   public render(): void {
     const element: React.ReactElement<ISortableAgendaProps> = React.createElement(
@@ -42,7 +61,22 @@ export default class SortableAgendaWebPart extends BaseClientSideWebPart <ISorta
 
   private loadLists(): Promise<IPropertyPaneDropdownOption[]> {
     return new Promise<IPropertyPaneDropdownOption[]>((resolve: (options: IPropertyPaneDropdownOption[]) => void, reject: (error: any) => void) => {
-      setTimeout((): void => {
+      this.context.spHttpClient.get(`${this.context.pageContext.web.absoluteUrl}/_api/lists?$filter=BaseTemplate eq 106`, SPHttpClient.configurations.v1, {
+        headers: {
+          'odata-version': '3.0',
+          'accept': 'application/json;odata=verbose',
+          'content-type': 'application/json;odata=verbose'
+        }
+      }).then((res: SPHttpClientResponse) => {
+        console.log("www");
+       
+        var mappedArray = [];
+        resolve(mappedArray);
+        
+      }).catch(error => {
+      
+      });
+      /*setTimeout((): void => {
         resolve([{
           key: 'sharedDocuments',
           text: 'Shared Documents'
@@ -51,7 +85,7 @@ export default class SortableAgendaWebPart extends BaseClientSideWebPart <ISorta
           key: 'myDocuments',
           text: 'My Documents'
         }]);
-      }, 2000);
+      }, 2000);*/
     });
   }
 
