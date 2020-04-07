@@ -44,7 +44,7 @@ export default class SortableAgendaWebPart extends BaseClientSideWebPart <ISorta
     const element: React.ReactElement<ISortableAgendaProps> = React.createElement(
       SortableAgenda,
       {
-        listName: this.properties.listName
+        listName: "CalendarList"
       }
     );
 

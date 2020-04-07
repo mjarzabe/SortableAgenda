@@ -65,9 +65,11 @@ var placeholder = (
   <div></div>
 );
 
-var onSort = (sortedList, dropEvent) => {
-
-};
+var onSort = function(sortedList, dropEvent) {
+  
+  console.log("sortedList", sortedList);
+  
+}
 
 export default class SortableAgenda extends React.Component <ISortableAgendaProps, {}> {  
 
@@ -109,11 +111,8 @@ export default class SortableAgenda extends React.Component <ISortableAgendaProp
       });
     });
   }*/
-  public async recalculateItems(){
-    const calendarList = "CalendarList";
-    const list = sp.web.lists.getByTitle(calendarList);
-    const r = await list.select("Id")();
-    alert(r.Id);
+  public async recalculateItems(sortedList){
+    console.log(sortedList);
 
 
   }
@@ -160,7 +159,6 @@ export default class SortableAgenda extends React.Component <ISortableAgendaProp
 
   }
   public render(): React.ReactElement<ISortableAgendaProps> {
-    this.recalculateItems();
     this.getCalendarEvents();
     return (
       <div className={ styles.sortableAgenda }>
