@@ -36,7 +36,7 @@ export default class SortableAgendaWebPart extends BaseClientSideWebPart <ISorta
         this.listsDropdownDisabled = false;
         this.context.propertyPane.refresh();
         //this.context.statusRenderer.clearLoadingIndicator(this.domElement);
-        this.render();
+        //this.render();
       });
   }
 

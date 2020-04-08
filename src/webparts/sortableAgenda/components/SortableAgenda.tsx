@@ -9,6 +9,17 @@ import { sp } from "@pnp/sp";
 import "@pnp/sp/webs"; 
 import "@pnp/sp/lists";
 import "@pnp/sp/items";
+import { Dropdown, MessageBar, MessageBarType,IDropdownOption } from 'office-ui-fabric-react';
+import {
+  DetailsList,
+  Selection,
+  IColumn,
+  buildColumns,
+  IColumnReorderOptions,
+  IDragDropEvents,
+  IDragDropContext,
+} from 'office-ui-fabric-react/lib/DetailsList';
+
 
 const agendaStyling = {
     agendaItemParent:{
@@ -30,7 +41,7 @@ var list = [
         <div style={agendaStyling.agendaItemChild}>1</div>
         <div style={agendaStyling.agendaItemChild}>9:30-10:30</div>
         <div style={agendaStyling.agendaItemChild}>30min</div>
-        <div style={agendaStyling.agendaItemChild}>Meeting ss</div>
+        <div style={agendaStyling.agendaItemChild}>Introcution</div>
         <div style={agendaStyling.agendaItemChild}>
           
           <button>More info</button>
@@ -42,7 +53,7 @@ var list = [
         <div style={agendaStyling.agendaItemChild}>2</div>
         <div style={agendaStyling.agendaItemChild}>8:30-10:30</div>
         <div style={agendaStyling.agendaItemChild}>30min</div>
-        <div style={agendaStyling.agendaItemChild}>Meeting ss</div>
+        <div style={agendaStyling.agendaItemChild}>Dinner</div>
         <div style={agendaStyling.agendaItemChild}>
           <button>More info</button>
         </div>
@@ -53,7 +64,7 @@ var list = [
         <div style={agendaStyling.agendaItemChild}>3</div>
         <div style={agendaStyling.agendaItemChild}>8:30-10:30</div>
         <div style={agendaStyling.agendaItemChild}>30min</div>
-        <div style={agendaStyling.agendaItemChild}>Meeting ss</div>
+        <div style={agendaStyling.agendaItemChild}>Break</div>
         <div style={agendaStyling.agendaItemChild}>
           <button>More info</button>
         </div>
@@ -62,109 +73,95 @@ var list = [
 ];
 
 var placeholder = (
-  <div></div>
+  <div>placeholder</div>
 );
 
-var onSort = function(sortedList, dropEvent) {
-  
-  console.log("sortedList", sortedList);
-  
+export interface IDropdownControlledExampleState {
+  selectedItem?: { key: string | number | undefined };
 }
 
-export default class SortableAgenda extends React.Component <ISortableAgendaProps, {}> {  
+export interface ISelectState {      
+  agendaState?:any[] | any;  
+  meetingList?:any[] | any;
+  agendaItemList?:any[] | any;
+  selectedList: string;
+  saveStatus: string;
+  selectedItem?: { key: string | number | undefined };
+} 
 
-  /*private getCalendarEvents(): Promise<Array<string>> {
-    return new Promise<Array<string>>((resolve: (options: Array<string>) => void, reject: (error: any) => void) => {
-      this.context.spHttpClient.get(`${this.context.pageContext.web.absoluteUrl}/_api/list/GetListByTitle(${this.props.listName})/items`, SPHttpClient.configurations.v1, {
-        headers: {
-          'odata-version': '3.0',
-          'accept': 'application/json;odata=verbose',
-          'content-type': 'application/json;odata=verbose'
-        }
-      }).then((res: SPHttpClientResponse) => {
-        console.log(res.json());
-       
-        var mappedArray = [];
-        resolve(mappedArray);
-        
-      }).catch(error => {
-      
-      });
-    });
-  }
-  private getEventItems(): Promise<Array<string>> {
-    return new Promise<Array<string>>((resolve: (options: Array<string>) => void, reject: (error: any) => void) => {
-      this.context.spHttpClient.get(`${this.context.pageContext.web.absoluteUrl}/_api/list/GetListByTitle('AgendaMaster')/items?$fitler=MeetingRef eq ${this.props.currentMeeting}`, SPHttpClient.configurations.v1, {
-        headers: {
-          'odata-version': '3.0',
-          'accept': 'application/json;odata=verbose',
-          'content-type': 'application/json;odata=verbose'
-        }
-      }).then((res: SPHttpClientResponse) => {
-        console.log(res.json());
-       
-        var mappedArray = [];
-        resolve(mappedArray);
-        
-      }).catch(error => {
-      
-      });
-    });
-  }*/
-  public async recalculateItems(sortedList){
-    console.log(sortedList);
-
-
+export default class SortableAgenda extends React.Component <ISortableAgendaProps,ISelectState> {
+  constructor(props) {    
+    super(props);    
+    this.state = {  
+      agendaItemList:list,
+      meetingList: [],
+      selectedList:"",
+      saveStatus:"",
+      selectedItem: undefined,
+    };   
   }
 
-  private async getCalendarEvents(){
+  private rebuildArrayToFitComponent = (arr) =>{
+    console.log(arr);
+    return arr;
+  };
 
+  public componentWillMount() {
     const calendarList = "CalendarList";
 
-    const r1 = await sp.web.lists.getByTitle(calendarList).items.getAll();
-    console.log(r1.length);
+    sp.web.lists.getByTitle(calendarList).items.getAll().then((items:any) => {      
+        this.setState({meetingList: items});
+    })
+  };
 
-    // set page size
-    const r2  = await sp.web.lists.getByTitle(calendarList).items.getAll(4000);
-    console.log(r2.length);
+  private onSort = (sortedList, dropEvent) => {
+    this.setState({ agendaItemList: sortedList});
+  };
 
-    const r3  = await sp.web.lists.getByTitle(calendarList).items.select("Title").top(4000).getAll();
-    console.log(r3.length);
+   private handleChange = (event: React.FormEvent<HTMLDivElement>, item: IDropdownOption): void => { 
+    const meetingAgendaList = "MeetingAgendaList";
+    const data: any = sp.web.lists
+                      .getByTitle(meetingAgendaList)
+                      .items
+                      .select("Title", "MeetingRef/Title", "MeetingRef/ID")
+                      .expand("MeetingRef").filter(`MeetingRef/Title eq '${item.text}'`)
+                      .getAll()
+                      .then((items:any) => {
+                        this.setState({selectedItem: item,agendaItemList:items});
+                      })
+  } 
 
-    const r4 = await sp.web.lists.getByTitle(calendarList).items.select("Title").filter("Title eq 'Test'").getAll();
-    console.log(r4.length);
-
+  private saveStateOnSharepoint = () =>{
+      alert("Save works");
+      this.setState({saveStatus:"Your meeting agenda has been saved succesfuly!"});
+      
   }
-  private async getEventItems(){
 
-    const agendaMaster = "AgendaMaster";
-
-    const r1 = await sp.web.lists.getByTitle(agendaMaster).items.getAll();
-    console.log(r1.length);
-
-    // set page size
-    const r2  = await sp.web.lists.getByTitle(agendaMaster).items.getAll(4000);
-    console.log(r2.length);
-
-    const r3  = await sp.web.lists.getByTitle(agendaMaster).items.select("Title").top(4000).getAll();
-    console.log(r3.length);
-  }
-  private async saveToMaster(itemID){
-    const calendarList = "CalendarList";
-    let list = sp.web.lists.getByTitle(calendarList);
-    const i = await list.items.getById(itemID).update({
-      Title: "My New Title",
-      Description: "Here is a new description"
-    });
-
-  }
   public render(): React.ReactElement<ISortableAgendaProps> {
-    this.getCalendarEvents();
-    return (
+
+    const {listName} = this.props;
+    const {meetingList, selectedList, agendaItemList, saveStatus} = this.state;
+
+    return(
       <div className={ styles.sortableAgenda }>
-        <div>{this.props.listName}</div>
-        <span>ss</span>
-        <div><select id='calenarEvents'></select></div>
+        {/* <div>{listName}</div> */}
+
+        <Dropdown
+          label="Select Meeting Item"
+          onChange={this.handleChange}
+          placeholder="Select an option"
+          options={meetingList.map(meeting => ({ key: meeting.Id, text: meeting.Title }))}
+        />
+        {saveStatus ? (
+          <MessageBar messageBarType={MessageBarType.success} isMultiline={false}>
+            {saveStatus}
+          </MessageBar>
+        ) : (
+        "")}
+
+          {/* <select onChange={this.handleChange} value={selectedList} id='calenarEvents'>
+            {meetingList.map((meeting) => <option key={meeting.Id}>{meeting.Title}</option>)}
+          </select> */}
         <div className={ styles.container }>
           <div style={{display:"grid",gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr", padding:"10px"}}>
             <span style={agendaStyling.agendaItemChild}>Order</span>
@@ -173,9 +170,10 @@ export default class SortableAgenda extends React.Component <ISortableAgendaProp
             <span style={agendaStyling.agendaItemChild}>Title</span>
             <span style={agendaStyling.agendaItemChild}>Controls</span>
           </div>
-            <DragSortableList items={list} placeholder={placeholder} onSort={onSort} type="vertical"/>
+           <DragSortableList items={this.rebuildArrayToFitComponent(agendaItemList)} placeholder={placeholder} onSort={this.onSort} type="vertical"/>
         </div>
+        <button onClick={this.saveStateOnSharepoint}>Save</button>
       </div>
-    );
-  }
+    )
+  } 
 }

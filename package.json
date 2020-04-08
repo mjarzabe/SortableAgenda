@@ -14,6 +14,7 @@
     "serve": "concurrently --kill-others \"npm run proxy\" \"gulp serve\""
   },
   "dependencies": {
+    "@fluentui/react": "^7.105.12",
     "@microsoft/sp-core-library": "^1.10.0",
     "@microsoft/sp-lodash-subset": "1.10.0",
     "@microsoft/sp-office-ui-fabric-core": "1.10.0",
