@@ -9,7 +9,7 @@ import { sp } from "@pnp/sp";
 import "@pnp/sp/webs"; 
 import "@pnp/sp/lists";
 import "@pnp/sp/items";
-import { Dropdown, MessageBar, MessageBarType,IDropdownOption } from 'office-ui-fabric-react';
+import { Dropdown, MessageBar, PrimaryButton, MessageBarType,IDropdownOption } from 'office-ui-fabric-react';
 import {
   DetailsList,
   Selection,
@@ -31,7 +31,7 @@ const agendaStyling = {
       margin:"5px"
     },
     agendaItemChild:{
-      width:"100%"
+      
     }  
 };
 
@@ -93,18 +93,13 @@ export default class SortableAgenda extends React.Component <ISortableAgendaProp
   constructor(props) {    
     super(props);    
     this.state = {  
-      agendaItemList:list,
+      agendaItemList:[],
       meetingList: [],
       selectedList:"",
       saveStatus:"",
       selectedItem: undefined,
     };   
   }
-
-  private rebuildArrayToFitComponent = (arr) =>{
-    console.log(arr);
-    return arr;
-  };
 
   public componentWillMount() {
     const calendarList = "CalendarList";
@@ -118,17 +113,32 @@ export default class SortableAgenda extends React.Component <ISortableAgendaProp
     this.setState({ agendaItemList: sortedList});
   };
 
-   private handleChange = (event: React.FormEvent<HTMLDivElement>, item: IDropdownOption): void => { 
-    const meetingAgendaList = "MeetingAgendaList";
+  private handleChange = (event: React.FormEvent<HTMLDivElement>, item: IDropdownOption): void => { 
+    const meetingAgendaList: string = "MeetingAgendaList";
     const data: any = sp.web.lists
                       .getByTitle(meetingAgendaList)
                       .items
-                      .select("Title", "MeetingRef/Title", "MeetingRef/ID")
+                      .select("Title","AgendaOrder","Duration", "MeetingRef/Title", "MeetingRef/Id")
                       .expand("MeetingRef").filter(`MeetingRef/Title eq '${item.text}'`)
                       .getAll()
                       .then((items:any) => {
-                        this.setState({selectedItem: item,agendaItemList:items});
+                        let data = items.map((item) =>
+                          ({ content: 
+                            <div style={agendaStyling.agendaItemParent}>
+                                <div style={agendaStyling.agendaItemChild}>{item.AgendaOrder}</div>
+                                <div style={agendaStyling.agendaItemChild}>8:30-10:30</div>
+                                <div style={agendaStyling.agendaItemChild}>{item.Duration}min</div>
+                                <div style={agendaStyling.agendaItemChild}>{item.Title}</div>
+                                <div style={agendaStyling.agendaItemChild}>
+                                  <button>More info</button>
+                                </div>
+                            </div>
+                            , class: ""})
+                          )
+
+                        this.setState({selectedItem: item, agendaItemList:data});
                       })
+
   } 
 
   private saveStateOnSharepoint = () =>{
@@ -157,10 +167,6 @@ export default class SortableAgenda extends React.Component <ISortableAgendaProp
           </MessageBar>
         ) : (
         "")}
-
-          {/* <select onChange={this.handleChange} value={selectedList} id='calenarEvents'>
-            {meetingList.map((meeting) => <option key={meeting.Id}>{meeting.Title}</option>)}
-          </select> */}
         <div className={ styles.container }>
           <div style={{display:"grid",gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr", padding:"10px"}}>
             <span style={agendaStyling.agendaItemChild}>Order</span>
@@ -169,9 +175,9 @@ export default class SortableAgenda extends React.Component <ISortableAgendaProp
             <span style={agendaStyling.agendaItemChild}>Title</span>
             <span style={agendaStyling.agendaItemChild}>Controls</span>
           </div>
-           <DragSortableList items={this.rebuildArrayToFitComponent(agendaItemList)} placeholder={placeholder} onSort={this.onSort} type="vertical"/>
+           <DragSortableList items={agendaItemList} placeholder={placeholder} onSort={this.onSort} type="vertical"/>
         </div>
-        <button onClick={this.saveStateOnSharepoint}>Save</button>
+        <PrimaryButton text="Save" onClick={this.saveStateOnSharepoint} allowDisabledFocus/>
       </div>
     )
   } 
